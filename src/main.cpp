@@ -194,7 +194,7 @@ void render()
                     {
                         if(isInside(y + i, x + j) && (i != 0 || j != 0))
                         {
-                            float delta = 0.6125168f;
+                            float delta = 0.6725168f;
                             if(
                                 (fabsf(vfb[y][x].r - vfb[y + i][x + j].r) > delta && fabsf(vfb[y][x].r - vfb[y + i][x + j].r) < 1.0f )||
                                 (fabsf(vfb[y][x].g - vfb[y + i][x + j].g) > delta && fabsf(vfb[y][x].g - vfb[y + i][x + j].g) < 1.0f )||
@@ -202,7 +202,7 @@ void render()
                                )
                                {
                                     flagsAA[y][x] = true;
-                                    //vfb[y][x] = Color(1.0f, 0.0f, 0.0f);
+                                    vfb[y][x] = Color(1.0f, 0.0f, 0.0f);
                                 }
                         }
                     }
@@ -213,12 +213,12 @@ void render()
 
 	for (int y = 0; y < frameHeight(); y++) {
 		for (int x = 0; x < frameWidth(); x++) {
-			if (flagsAA[y][x]) {
+			/*if (flagsAA[y][x]) {
 				Color sum = vfb[y][x];
 				for (int i = 1; i < COUNT_OF(kernel); i++)
 					sum += raytrace(camera.getScreenRay(x + kernel[i][0], y + kernel[i][1]));
 				vfb[y][x] = sum / double(COUNT_OF(kernel));
-			}
+			}*/
 		}
 		if (SDL_GetTicks() - lastTicks > 100) {
 			displayVFB(vfb);
