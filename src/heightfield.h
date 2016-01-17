@@ -35,16 +35,18 @@ class Heightfield: public Geometry {
 	float getHeight(int x, int y) const;
 	float getHighest(int x, int y, int k) const;
 	Vector getNormal(float x, float y) const;
-	
+
+	inline void check(int& x, int& y);
+
 	bool useOptimization;
 	struct HighStruct {
 		float h[16];
 	};
 	HighStruct* highMap;
 	int maxK;
-	
+
 	void buildHighMap();
-	
+
 public:
 	Heightfield();
 	~Heightfield();

@@ -59,13 +59,20 @@ float Heightfield::getHighest(int x, int y, int k) const
 	return highMap[y * W + x].h[k];
 }
 
+inline void Heightfield::check(int& x, int& y)
+{
+    x = min(W - 1, x);
+	y = min(H - 1, y);
+	x = max(0, x);
+	y = max(0, y);
+}
 
 void Heightfield::buildHighMap()
 {
 	maxK = ceil(log(max(W, H)) / log(2));
-	
+
 	highMap = new HighStruct[W * H];
-	
+
 	for (int y = 0; y < H; y++) {
 		for (int x = 0; x < W; x++) {
 			float& thisHeight = highMap[y * W + x].h[0];
@@ -75,22 +82,37 @@ void Heightfield::buildHighMap()
 					thisHeight = max(thisHeight, getHeight(x + dx, y + dy));
 		}
 	}
-	
+
 	// r = 1 -> square 3x3
 	// r = 2 -> square 5x5
 	// r = 4 -> square 9x9
 	// r = 2^k -> square (2^(k+1) + 1)x(2^(k+1) + 1)
-	// r = 2^k -> offset-> 2^(k - 1) 
+	// r = 2^k -> offset-> 2^(k - 1)
 	for (int k = 1; k < maxK; k++) {
 		for (int y = 0; y < H; y++) {
 			for (int x = 0; x < W; x++) {
 				int offset = (1 << (k - 1));
-				highMap[y * W + x].h[k] = 
+                int xPlus = x + offset;
+                int yPlus = y + offset;
+                int xMinus = x - offset;
+                int yMinus = y - offset;
+
+                check(xPlus, yPlus);
+                check(xMinus, yMinus);
+
+				/*highMap[y * W + x].h[k] =
 					max(
 						max(getHighest(x - offset, y - offset, k - 1),
 							getHighest(x + offset, y - offset, k - 1)),
 						max(getHighest(x - offset, y + offset, k - 1),
-							getHighest(x + offset, y + offset, k - 1)));
+							getHighest(x + offset, y + offset, k - 1)));*/
+
+                highMap[y * W + x].h[k] =
+					max(
+						max(highMap[yMinus * W + xMinus].h[k - 1],
+							highMap[yPlus * W + xMinus].h[k - 1]),
+						max(highMap[yMinus * W + xPlus].h[k - 1],
+							highMap[yPlus * W + xPlus].h[k - 1]));
 			}
 		}
 	}
@@ -110,7 +132,7 @@ Vector Heightfield::getNormal(float x, float y) const
 	y0 = min(H - 1, y0);
 	x0 = max(0, x0);
 	y0 = max(0, y0);
-	Vector v = 
+	Vector v =
 		normals[y0 * W + x0] * ((1 - p) * (1 - q)) +
 		normals[y0 * W + x1] * ((    p) * (1 - q)) +
 		normals[y1 * W + x0] * ((1 - p) * (    q)) +
@@ -119,6 +141,7 @@ Vector Heightfield::getNormal(float x, float y) const
 	return v;
 }
 
+
 bool Heightfield::intersect(const Ray& ray, IntersectionInfo& info)
 {
 	Vector step = ray.dir;
@@ -126,7 +149,7 @@ bool Heightfield::intersect(const Ray& ray, IntersectionInfo& info)
 	step /= distHoriz;
 	double dist = bbox.closestIntersection(ray);
 	Vector p = ray.start + ray.dir * (dist + 1e-6); // step firmly inside the bbox
-	
+
 
 	double mx = 1.0 / ray.dir.x; // mx = how much to go along ray.dir until the unit distance along X is traversed
 	double mz = 1.0 / ray.dir.z; // same as mx, for Z
@@ -138,8 +161,27 @@ bool Heightfield::intersect(const Ray& ray, IntersectionInfo& info)
 
 		if (useOptimization) {
 			int k = 0;
-			while (k < maxK && min(p.y, p.y + ray.dir.y * (1 << k)) > getHighest(x0, z0, k))
+			int foo;
+            (p.y > p.y + ray.dir.y * (1 << k))?
+                foo = 1
+            :
+                foo = 0;
+            while(k < maxK && (p.y + ray.dir.y * (1 << k) * foo) > highMap[z0 * W + x0].h[k])
+			//while (k < maxK && min(p.y, p.y + ray.dir.y * (1 << k)) > getHighest(x0, z0, k))
 				k++;
+
+           /* int to = maxK;
+            int from = 0;
+            while(from == to && to == k)
+            {
+                k = (from + to)/2;
+                if(min(p.y, p.y + ray.dir.y * (1 << k)) > getHighest(x0, z0, k))
+                    from = k + 1;
+                else
+                    to = k - 1;
+            }
+*/
+
 			k--;
 			if (k >= 0) {
 				p += ray.dir * (1 << k);
@@ -148,7 +190,7 @@ bool Heightfield::intersect(const Ray& ray, IntersectionInfo& info)
 				if (x0 < 0 || x0 >= W || z0 < 0 || z0 >= H) break; // if outside the [0..W)x[0..H) rect, get out
 			}
 		}
-		
+
 		// calculate how much we need to go along ray.dir until we hit the next X voxel boundary:
 		double lx = ray.dir.x > 0 ? (ceil(p.x) - p.x) * mx : (floor(p.x) - p.x) * mx;
 		// same as lx, for the Z direction:
@@ -163,7 +205,7 @@ bool Heightfield::intersect(const Ray& ray, IntersectionInfo& info)
 			double closestDist = INF;
 			// form ABCD - the four corners of the current voxel, whose heights are taken from the heightmap
 			// then form triangles ABD and BCD and try to intersect the ray with each of them:
-			Vector A = Vector(x0, getHeight(x0, z0), z0);
+			Vector A = Vector(x0, heights[z0 * W + x0], z0);
 			Vector B = Vector(x0 + 1, getHeight(x0 + 1, z0), z0);
 			Vector C = Vector(x0 + 1, getHeight(x0 + 1, z0 + 1), z0 + 1);
 			Vector D = Vector(x0, getHeight(x0, z0 + 1), z0 + 1);
@@ -237,10 +279,10 @@ void Heightfield::fillProperties(ParsedBlock& pb)
 			}
 		}
 	}
-	
+
 	bbox.vmin = Vector(0, minY, 0);
 	bbox.vmax = Vector(W, maxY, H);
-	
+
 	maxH = new float[W*H];
 	for (int y = 0; y < H; y++)
 		for (int x = 0; x < W; x++) {
@@ -253,7 +295,7 @@ void Heightfield::fillProperties(ParsedBlock& pb)
 					maxH = max(maxH, heights[(y + 1) * W + x + 1]);
 			}
 		}
-	
+
 	normals = new Vector[W * H];
 	for (int y = 0; y < H - 1; y++)
 		for (int x = 0; x < W - 1; x++) {
