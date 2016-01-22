@@ -67,7 +67,7 @@ class ParsedBlockImpl: public ParsedBlock {
 		char propName[128];
 		char propValue[256];
 		bool recognized;
-		
+
 		LineInfo() {}
 		LineInfo(int line, const char* name, const char* value): line(line)
 		{
@@ -370,7 +370,7 @@ public:
 	Texture* findTextureByName(const char* name);
 	Geometry* findGeometryByName(const char* name);
 	Node* findNodeByName(const char* name);
-	
+
 	bool parse(const char* filename, Scene* s);
 };
 
@@ -860,6 +860,7 @@ SceneElement* DefaultSceneParser::newSceneElement(const char* className)
 	if (!strcmp(className, "Const")) return new Const;
 	if (!strcmp(className, "PointLight")) return new PointLight;
 	if (!strcmp(className, "RectLight")) return new RectLight;
+    if (!strcmp(className, "SpotLight")) return new SpotLight;
 
 	return NULL;
 }

@@ -26,21 +26,21 @@ void RectLight::getNthSample(int sampleIdx, const Vector& shadePos,
 	Random& rnd = getRandomGen();
 	double x = (sampleIdx % xSubd + rnd.randfloat()) / xSubd;
 	double y = (sampleIdx / xSubd + rnd.randfloat()) / ySubd;
-	
+
 	samplePos = Vector(x - 0.5, 0, y - 0.5);
-	
+
 	Vector shadePos_LS = T.undoPoint(shadePos);
-	
+
 	if (shadePos_LS.y < 0) {
 		float cosWeight = float(dot(Vector(0, -1, 0), shadePos_LS) / shadePos_LS.length());
 		color = this->color * power * area * cosWeight;
 	} else {
 		color.makeZero();
 	}
-	
+
 	samplePos = T.point(samplePos);
 }
-	
+
 bool RectLight::intersect(const Ray& ray, double& intersectionDist)
 {
 	Ray ray_LS = T.undoRay(ray);
@@ -52,8 +52,8 @@ bool RectLight::intersect(const Ray& ray, double& intersectionDist)
 	Vector p = ray_LS.start + ray_LS.dir * lengthToIntersection;
 	if (fabs(p.x) < 0.5 && fabs(p.z) < 0.5) {
 		// the hit point is inside the 1x1 square - calculate the length to the intersection:
-		double distance = (T.point(p) - ray.start).length(); 
-		
+		double distance = (T.point(p) - ray.start).length();
+
 		if (distance < intersectionDist) {
 			intersectionDist = distance;
 			return true; // intersection found, and it improves the current closest dist
@@ -70,5 +70,36 @@ float RectLight::solidAngle(const Vector& x)
 	float cosA = dot(x_dir, Vector(0, -1, 0));
 	double d = (x - center).lengthSqr();
 	return area * cosA / (1 + d);
+}
+
+void SpotLight::getNthSample(int sampleIdx, const Vector& shadePos,
+						  Vector& samplePos, Color& color)
+{
+    Vector foo = dir - pos;
+    Vector bar= shadePos - pos;
+    foo.normalize();
+    bar.normalize();
+
+    samplePos = pos;
+
+    float cosWeight = dot(dir,bar)/dir.length();
+    if(cosWeight < 0)
+    {
+        color.makeZero();
+        return;
+    }
+    float angle = (acos(cosWeight) / PI) * 180.0f ;
+
+    if (angle <= innerAngle )
+    {
+        color = this->color * power;
+    }
+    else if (angle <= outerAngle)
+    {
+        float delta = (angle - outerAngle)/(innerAngle - outerAngle);
+        color = this->color * power * delta;
+    }
+    else
+        color.makeZero();
 }
 

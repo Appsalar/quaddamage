@@ -35,13 +35,13 @@ protected:
 public:
 	Light() { color = Color(1, 1, 1); power = 1; }
 	virtual ~Light() {}
-	
+
 	ElementType getElementType() const { return ELEM_LIGHT; }
-	
+
 	Color getColor() const { return color * power; }
 
 	virtual int getNumSamples() = 0;
-	
+
 	virtual void getNthSample(int sampleIdx, const Vector& shadePos,
 							  Vector& samplePos, Color& color) = 0;
 
@@ -53,7 +53,7 @@ public:
 	 * @retval false, otherwise.
 	 */
 	virtual bool intersect(const Ray& ray, double& intersectionDist) = 0;
-	
+
 	virtual float solidAngle(const Vector& x) = 0;
 
 	void fillProperties(ParsedBlock& pb)
@@ -71,12 +71,12 @@ public:
 		Light::fillProperties(pb);
 		pb.getVectorProp("pos", &pos);
 	}
-	
+
 	int getNumSamples()
 	{
 		return 1;
 	}
-	
+
 	void getNthSample(int sampleIdx, const Vector& shadePos,
 							  Vector& samplePos, Color& color)
 	{
@@ -88,7 +88,7 @@ public:
 	{
 		return false; // you cannot intersect a point light.
 	}
-	
+
 	float solidAngle(const Vector& x)
 	{
 		return 0;
@@ -109,14 +109,48 @@ public:
 		pb.getIntProp("ySubd", &ySubd, 1);
 		pb.getTransformProp(T);
 	}
-	
+
 	int getNumSamples();
-	
+
 	void getNthSample(int sampleIdx, const Vector& shadePos,
 							  Vector& samplePos, Color& color);
 	bool intersect(const Ray& ray, double& intersectionDist);
 	float solidAngle(const Vector& x);
-	
+
+};
+
+class SpotLight: public Light
+{
+    Vector pos;
+    Vector dir;
+    float innerAngle;
+    float outerAngle;
+public:
+	void fillProperties(ParsedBlock& pb)
+	{
+		Light::fillProperties(pb);
+		pb.getVectorProp("pos", &pos);
+		pb.getVectorProp("dir", &dir);
+		pb.getFloatProp("innerAngle", &innerAngle);
+		pb.getFloatProp("outerAngle", &outerAngle);
+	}
+
+	int getNumSamples()
+	{
+	    return 1;
+	}
+
+	void getNthSample(int sampleIdx, const Vector& shadePos,
+							  Vector& samplePos, Color& color);
+	bool intersect(const Ray& ray, double& intersectionDist)
+	{
+	    return false;
+	}
+
+	float solidAngle(const Vector& x)
+	{
+	    return 0;
+	}
 };
 
 #endif // __LIGHTS_H__
