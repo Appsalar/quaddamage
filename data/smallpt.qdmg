@@ -10,6 +10,7 @@ GlobalSettings {
 	ambientLight (0.1, 0.1, 0.1)
 	gi 			on
 	numPaths 	40
+	roulette    off
 }
 
 Camera camera {

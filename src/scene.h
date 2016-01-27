@@ -61,9 +61,9 @@ public:
 	char name[64]; //!< A name of this element (a string like "sphere01", "myCamera", etc)
 	SceneElement(); //!< A constructor. It sets the name to the empty string.
 	virtual ~SceneElement() {} //!< a virtual destructor
-	
+
 	virtual ElementType getElementType() const = 0; //!< Gets the element type
-	
+
 	/**
 	 * @brief set all the properties of a scene element from a parsed block
 	 *
@@ -97,7 +97,7 @@ public:
 	 * (the implementation of SceneElement::fillProperties() does nothing)
 	 */
 	virtual void fillProperties(ParsedBlock& pb);
-	
+
 	/**
 	 * @brief a callback that gets called before the rendering commences
 	 *
@@ -119,7 +119,7 @@ public:
 	 * All these callbacks are called by the Scene::beginRender() function.
 	 */
 	virtual void beginRender();
-	
+
 	/**
 	 * @brief same as beginRender(), but gets called before each frame
 	 *
@@ -128,7 +128,7 @@ public:
 	 * (e.g., when rendering an animation).
 	 */
 	virtual void beginFrame();
-	
+
 	friend class SceneParser;
 };
 
@@ -159,25 +159,25 @@ public:
 	virtual bool getTextureProp(const char* name, Texture** value) = 0;
 	virtual bool getNodeProp(const char* name, Node** value) = 0;
 	virtual bool getStringProp(const char* name, char* value) = 0; // the buffer should be 256 chars long
-	
+
 	// useful for scene assets like textures, mesh files, etc.
 	// the value will hold the full filename to the file.
 	// If the file/dir is not found, a FileNotFound exception is raised.
 	virtual bool getFilenameProp(const char* name, char* value) = 0;
-	
+
 	// Does the same logic as getFilenameProp(), but also loads the bitmap
 	// file from the specified file name. The given bitmap is first deleted if not NULL.
 	virtual bool getBitmapFileProp(const char* name, Bitmap& value) = 0;
-	
+
 	// Gets a transform from the parsed block. Namely, it searches for all properties named
 	// "scale", "rotate" and "translate" and applies them to T.
 	virtual void getTransformProp(Transform& T) = 0;
-	
+
 	virtual void requiredProp(const char* name) = 0; // signal an error (missing property of the given name)
-	
+
 	virtual void signalError(const char* msg) = 0; // signal an error with a specified message
 	virtual void signalWarning(const char* msg) = 0; // signal a warning with a specified message
-	
+
 	// some functions for direct parsed block access:
 	virtual int getBlockLines() = 0;
 	virtual void getBlockLine(int idx, int& srcLine, char head[], char tail[]) = 0;
@@ -192,8 +192,8 @@ public:
 	virtual Texture* findTextureByName(const char* name) = 0;
 	virtual Geometry* findGeometryByName(const char* name) = 0;
 	virtual Node* findNodeByName(const char* name) = 0;
-	
-	
+
+
 	/**
 	 * resolveFullPath() tries to find a file (or folder), by appending the given path to the directory, where
 	 * the scene file resides. The idea is that all external files (textures, meshes, etc.) are
@@ -245,19 +245,21 @@ struct GlobalSettings: public SceneElement {
 
 	// Lighting:
 	Color ambientLight;          //!< ambient color
-	
+
 	// AA-related:
 	bool wantAA;                 //!< Is Anti-Aliasing on?
 	bool gi;                     //!< Is GI on?
-	
+
 	int maxTraceDepth;           //!< Maximum recursion depth
-	
+
 	bool dbg;                    //!< A debugging flag (if on, various raytracing-related procedures will dump debug info to stdout).
-	float saturation; 
-	
+	float saturation;
+
 	bool wantPrepass;            //!< Coarse resolution pre-pass required (defaults to true)
 	int numPaths;                //!< paths per pixel in path tracing
-		
+
+	bool roulette;
+
 	GlobalSettings();
 	void fillProperties(ParsedBlock& pb);
 	ElementType getElementType() const { return ELEM_SETTINGS; }
@@ -273,10 +275,10 @@ struct Scene {
 	Environment* environment;
 	Camera* camera;
 	GlobalSettings settings;
-	
+
 	Scene();
 	~Scene();
-	
+
 	bool parseScene(const char* sceneFile); //!< Parses a scene file and loads the scene from it. Returns true on success.
 	void beginRender(); //!< Notifies the scene so that a render is about to begin. It calls the beginRender() method of all scene elements
 	void beginFrame(); //!< Notifies the scene so that a new frame is about to begin. It calls the beginFrame() method of all scene elements
