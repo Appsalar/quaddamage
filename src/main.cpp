@@ -372,6 +372,18 @@ void displayAccum(vector<vector<Color>>& Arr, int framesCnt)
 	SDL_Flip(screen);
 }
 
+inline void nulify(vector<vector<Color>>& Arr, int& framesCnt)
+{
+    for (int y = 0; y < frameHeight(); ++y)
+    {
+        for (int x = 0; x < frameWidth(); ++x)
+        {
+            Arr[y][x] = Color(0, 0, 0);
+        }
+    }
+    framesCnt = 0;
+}
+
 void mainloop(void)
 {
 	SDL_ShowCursor(0);
@@ -424,14 +436,6 @@ void mainloop(void)
 					break;
 				case SDL_KEYDOWN:
 				{
-				    for (int y = 0; y < frameHeight(); ++y)
-                    {
-                        for (int x = 0; x < frameWidth(); ++x)
-                        {
-                            accum[y][x] = Color(0, 0, 0);
-                        }
-                    }
-                    accumFrames = 0;
 					switch (ev.key.keysym.sym) {
 						case SDLK_ESCAPE:
 							running = false;
@@ -441,51 +445,72 @@ void mainloop(void)
 					}
 					break;
 				}
-                case SDL_MOUSEMOTION:
-                {
-                    int deltax, deltay;
-                    SDL_GetRelativeMouseState(&deltax, &deltay);
-
-                    if(deltax || deltay)
-                    {
-                        for (int y = 0; y < frameHeight(); ++y)
-                        {
-                            for (int x = 0; x < frameWidth(); ++x)
-                            {
-                                accum[y][x] = Color(0, 0, 0);
-                            }
-                        }
-                        accumFrames = 0;
-                        break;
-                    }
-                }
                 default:
                 {
-                    accumFrames += scene.settings.numPaths;
                     break;
                 }
 			}
 		}
 
-		if(accumFrames)
-            continue;
-
 		Uint8* keystate = SDL_GetKeyState(NULL);
 		double movement = MOVEMENT_PER_SEC * timeDelta;
 		double rotation = ROTATION_PER_SEC * timeDelta;
-		if (keystate[SDLK_UP]) cam.move(0, +movement);
-		if (keystate[SDLK_DOWN]) cam.move(0, -movement);
-		if (keystate[SDLK_LEFT]) cam.move(-movement, 0);
-		if (keystate[SDLK_RIGHT]) cam.move(+movement, 0);
+		if (keystate[SDLK_UP])
+        {
+            cam.move(0, +movement);
+            nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_DOWN])
+		{
+            cam.move(0, -movement);
+            nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_LEFT])
+		{
+            cam.move(-movement, 0);
+            nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_RIGHT])
+        {
+            cam.move(+movement, 0);
+           nulify(accum, accumFrames);
+        }
 
-		if (keystate[SDLK_KP8]) cam.rotate(0, +rotation);
-		if (keystate[SDLK_KP2]) cam.rotate(0, -rotation);
-		if (keystate[SDLK_KP4]) cam.rotate(+rotation, 0);
-		if (keystate[SDLK_KP6]) cam.rotate(-rotation, 0);
+
+
+		if (keystate[SDLK_KP8])
+		{
+            cam.rotate(0, +rotation);
+           nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_KP2])
+		{
+            cam.rotate(0, -rotation);
+            nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_KP4])
+		{
+            cam.rotate(+rotation, 0);
+            nulify(accum, accumFrames);
+        }
+		if (keystate[SDLK_KP6])
+		{
+            cam.rotate(-rotation, 0);
+            nulify(accum, accumFrames);
+        }
 
 		int deltax, deltay;
 		SDL_GetRelativeMouseState(&deltax, &deltay);
-		cam.rotate(-SENSITIVITY * deltax, -SENSITIVITY*deltay);
+
+		if(deltax || deltay)
+        {
+            cam.rotate(-SENSITIVITY * deltax, -SENSITIVITY*deltay);
+            nulify(accum, accumFrames);
+        }
+        else
+        {
+            ++accumFrames;
+        }
 	}
 }
 
