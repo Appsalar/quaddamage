@@ -67,7 +67,7 @@ class ParsedBlockImpl: public ParsedBlock {
 		char propName[128];
 		char propValue[256];
 		bool recognized;
-		
+
 		LineInfo() {}
 		LineInfo(int line, const char* name, const char* value): line(line)
 		{
@@ -370,7 +370,7 @@ public:
 	Texture* findTextureByName(const char* name);
 	Geometry* findGeometryByName(const char* name);
 	Node* findNodeByName(const char* name);
-	
+
 	bool parse(const char* filename, Scene* s);
 };
 
@@ -820,6 +820,7 @@ GlobalSettings::GlobalSettings()
 	wantPrepass = true;
 	gi = false;
 	numPaths = 10;
+	output3DTV  = false;
 }
 
 void GlobalSettings::fillProperties(ParsedBlock& pb)
@@ -834,6 +835,7 @@ void GlobalSettings::fillProperties(ParsedBlock& pb)
 	pb.getBoolProp("wantPrepass", &wantPrepass);
 	pb.getBoolProp("gi", &gi);
 	pb.getIntProp("numPaths", &numPaths, 1);
+	pb.getBoolProp("output3DTV", &output3DTV);
 }
 
 SceneElement* DefaultSceneParser::newSceneElement(const char* className)

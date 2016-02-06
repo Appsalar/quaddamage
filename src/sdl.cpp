@@ -87,13 +87,13 @@ static void findUnusedFN(char fn[], const char* suffix)
 		fclose(f);
 		idx++;
 	}
-	sprintf(fn, "quad_damage_%04d.%s", idx, suffix); 
+	sprintf(fn, "quad_damage_%04d.%s", idx, suffix);
 }
 
 bool takeScreenshot(const char* filename)
 {
 	extern Color vfb[VFB_MAX_SIZE][VFB_MAX_SIZE]; // from main.cpp
-	
+
 	Bitmap bmp;
 	bmp.generateEmptyImage(frameWidth(), frameHeight());
 	for (int y = 0; y < frameHeight(); y++)
@@ -163,7 +163,7 @@ void waitForUserExit(void)
 /// returns the frame width
 int frameWidth(void)
 {
-	if (screen) return screen->w;
+	if (screen) return screen->w; //scene.settings.frameWidth;
 	return 0;
 }
 
@@ -205,12 +205,12 @@ bool renderScene_threaded(void)
 	rendering = true;
 	extern int renderSceneThread(void*);
 	render_thread = SDL_CreateThread(renderSceneThread, NULL);
-	
+
 	if(render_thread == NULL) { //Failed to start for some bloody reason
 		rendering = render_async = false;
 		return false;
 	}
-	
+
 	while (!wantToQuit) {
 		{
 			MutexRAII raii(render_lock);
@@ -226,7 +226,7 @@ bool renderScene_threaded(void)
 	rendering = false;
 	SDL_WaitThread(render_thread, NULL);
 	render_thread = NULL;
-	
+
 	render_async = false;
 	return true;
 }
@@ -263,15 +263,15 @@ std::vector<Rect> getBucketsList(void)
 bool drawRect(Rect r, const Color& c)
 {
 	MutexRAII raii(render_lock);
-	
+
 	if (render_async && !rendering) return false;
-	
+
 	r.clip(frameWidth(), frameHeight());
-	
+
 	int rs = screen->format->Rshift;
 	int gs = screen->format->Gshift;
 	int bs = screen->format->Bshift;
-	
+
 	Uint32 clr = c.toRGB32(rs, gs, bs);
 	for (int y = r.y0; y < r.y1; y++) {
 		Uint32 *row = (Uint32*) ((Uint8*) screen->pixels + y * screen->pitch);
@@ -279,7 +279,7 @@ bool drawRect(Rect r, const Color& c)
 			row[x] = clr;
 	}
 	SDL_UpdateRect(screen, r.x0, r.y0, r.w, r.h);
-	
+
 	return true;
 }
 
@@ -288,7 +288,7 @@ bool displayVFBRect(Rect r, Color vfb[VFB_MAX_SIZE][VFB_MAX_SIZE])
 	MutexRAII raii(render_lock);
 
 	if (render_async && !rendering) return false;
-	
+
 	r.clip(frameWidth(), frameHeight());
 	int rs = screen->format->Rshift;
 	int gs = screen->format->Gshift;
@@ -299,7 +299,7 @@ bool displayVFBRect(Rect r, Color vfb[VFB_MAX_SIZE][VFB_MAX_SIZE])
 			row[x] = vfb[y][x].toRGB32(rs, gs, bs);
 	}
 	SDL_UpdateRect(screen, r.x0, r.y0, r.w, r.h);
-	
+
 	return true;
 }
 
@@ -308,7 +308,7 @@ bool markRegion(Rect r, const Color& bracketColor)
 	MutexRAII raii(render_lock);
 
 	if (render_async && !rendering) return false;
-	
+
 	r.clip(frameWidth(), frameHeight());
 	const int L = 8;
 	if (r.w < L+3 || r.h < L+3) return true; // region is too small to be marked
@@ -325,7 +325,7 @@ bool markRegion(Rect r, const Color& bracketColor)
 		DRAW_ONE(y, r.h - 1 - (x), color); \
 		DRAW_ONE(r.w - 1 - (x), r.h - 1 - (y), color); \
 		DRAW_ONE(r.w - 1 - (y), r.h - 1 - (x), color)
-	
+
 	for (int i = 1; i <= L; i++) {
 		DRAW(i, 0, OUTLINE_COLOR);
 	}
@@ -337,9 +337,9 @@ bool markRegion(Rect r, const Color& bracketColor)
 	for  (int i = 2; i <= L; i++) {
 		DRAW(i, 1, BRACKET_COLOR);
 	}
-	
+
 	SDL_UpdateRect(screen, r.x0, r.y0, r.w, r.h);
-	
+
 	return true;
 }
 
